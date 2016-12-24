@@ -1,6 +1,4 @@
-package main
-
-import "fmt"
+package controllers
 
 // Controller represents a single ps3 controller connected to the
 // current system.
