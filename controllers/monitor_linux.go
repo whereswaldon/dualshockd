@@ -28,9 +28,9 @@ func NewMonitor(done <-chan struct{}) (Monitor, error) {
 		// look at each input device event
 		for event := range events {
 			// if the event is about a joystick
-			if dev.Properties()["ID_INPUT_JOYSTICK"] == "1" {
+			if event.Properties()["ID_INPUT_JOYSTICK"] == "1" {
 				// find the "hid" subsystem parent and pass that on.
-				for parent := dev.Parent(); parent != nil; parent = parent.Parent() {
+				for parent := event.Parent(); parent != nil; parent = parent.Parent() {
 					if parent.Subsystem() == "hid" {
 						controllers <- NewController(parent)
 					}
@@ -47,7 +47,7 @@ func NewMonitor(done <-chan struct{}) (Monitor, error) {
 // Controllers returns a channel along which each new Controller
 // connected to the system will be passed.
 func (m *LinuxMonitor) Controllers() <-chan Controller {
-	return nil
+	return m.controllers
 }
 
 var _ Monitor = &LinuxMonitor{}
