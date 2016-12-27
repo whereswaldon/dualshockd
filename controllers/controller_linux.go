@@ -2,6 +2,7 @@ package controllers
 
 import (
 	udev "github.com/jochenvg/go-udev"
+	"path/filepath"
 )
 
 // NewController creates a controller from a linux udev
@@ -40,7 +41,15 @@ func (c *LinuxController) BatteryChanges() <-chan uint {
 
 // Name returns a unique identifier for this controller.
 func (c *LinuxController) Name() string {
-	return ""
+	return filepath.Base(c.device.Syspath())
+}
+
+func (c *LinuxController) String() string {
+	var properties string
+	for key, value := range c.device.Properties() {
+		properties += key + ":\t" + value + "\n"
+	}
+	return c.Name() + "\n" + properties
 }
 
 var _ Controller = &LinuxController{}
