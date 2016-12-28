@@ -100,6 +100,10 @@ func NewMonitor(done <-chan struct{}) (Monitor, error) {
 			case <-done:
 				return
 			case device := <-passDevices:
+				if device == nil {
+					// stop reading this channel
+					passDevices = nil
+				}
 				passIfValidJoystick(device)
 			case device := <-newDevices:
 				passIfValidJoystick(device)
