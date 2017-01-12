@@ -1,11 +1,12 @@
 package main
 
 import (
-	"fmt"
 	"github.com/pkg/profile"
 	"github.com/whereswaldon/dualshockd/controllers"
+	"log"
 	"os"
 	"os/signal"
+	"time"
 )
 
 func main() {
@@ -14,7 +15,7 @@ func main() {
 	defer close(done)
 	m, err := controllers.NewMonitor(done)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		return
 	}
 	interrupt := make(chan os.Signal)
@@ -22,10 +23,20 @@ func main() {
 	for c := range m.Controllers() {
 		select {
 		case <-interrupt:
-			fmt.Println("exiting")
+			log.Println("Recieved SIGINT, exiting...")
 			return
 		default:
-			fmt.Println(c)
+			log.Printf("Found controller %s\n", c.Name())
+			go func(c controllers.Controller) {
+				for range time.NewTicker(time.Minute).C {
+					charge, err := c.Charge()
+					if err != nil {
+						log.Println(err)
+					} else {
+						log.Printf("%s: Battery %d%%\n", c.Name(), charge)
+					}
+				}
+			}(c)
 		}
 	}
 }

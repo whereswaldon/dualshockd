@@ -77,7 +77,11 @@ func NewMonitor(done <-chan struct{}) (Monitor, error) {
 			// find the "hid" subsystem parent and pass that on.
 			hidParent := getHIDParent(device)
 			if hidParent != nil && !monitored.Contains(hidParent.Properties()["HID_UNIQ"]) {
-				controllers <- NewController(hidParent)
+				controller, err := NewController(done, hidParent)
+				if err != nil {
+					//TODO: handle error?
+				}
+				controllers <- controller
 				monitored.Add(hidParent.Properties()["HID_UNIQ"])
 			}
 		}
