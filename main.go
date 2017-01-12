@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+	"github.com/0xAX/notificator"
 	"github.com/pkg/profile"
 	"github.com/whereswaldon/dualshockd/controllers"
 	"log"
@@ -8,6 +10,10 @@ import (
 	"os/signal"
 	"time"
 )
+
+var notify *notificator.Notificator = notificator.New(notificator.Options{
+	AppName: "Dualshockd",
+})
 
 // watchController observes the battery status of a controller
 // and emits updates on it until the done channel is closed.
@@ -23,7 +29,7 @@ func watchController(done <-chan struct{}, c controllers.Controller) {
 				log.Println(err)
 			} else {
 				if charge != lastCharge {
-					log.Printf("%s: New Battery Charge %d%%\n", c.Name(), charge)
+					notify.Push(c.Name(), fmt.Sprintf("Battery is now at %d%%", charge), "", notificator.UR_NORMAL)
 				}
 				log.Printf("%s: Battery %d%%\n", c.Name(), charge)
 			}
