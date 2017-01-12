@@ -12,6 +12,7 @@ import (
 // watchController observes the battery status of a controller
 // and emits updates on it until the done channel is closed.
 func watchController(done <-chan struct{}, c controllers.Controller) {
+	var lastCharge uint
 	for range time.NewTicker(time.Minute).C {
 		select {
 		case <-done:
@@ -21,8 +22,12 @@ func watchController(done <-chan struct{}, c controllers.Controller) {
 			if err != nil {
 				log.Println(err)
 			} else {
+				if charge != lastCharge {
+					log.Printf("%s: New Battery Charge %d%%\n", c.Name(), charge)
+				}
 				log.Printf("%s: Battery %d%%\n", c.Name(), charge)
 			}
+			lastCharge = charge
 		}
 	}
 }
