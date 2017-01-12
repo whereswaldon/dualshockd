@@ -9,6 +9,24 @@ import (
 	"time"
 )
 
+// watchController observes the battery status of a controller
+// and emits updates on it until the done channel is closed.
+func watchController(done <-chan struct{}, c controllers.Controller) {
+	for range time.NewTicker(time.Minute).C {
+		select {
+		case <-done:
+			return
+		default:
+			charge, err := c.Charge()
+			if err != nil {
+				log.Println(err)
+			} else {
+				log.Printf("%s: Battery %d%%\n", c.Name(), charge)
+			}
+		}
+	}
+}
+
 func main() {
 	defer profile.Start(profile.MemProfile).Stop()
 	done := make(chan struct{})
@@ -27,16 +45,7 @@ func main() {
 			return
 		default:
 			log.Printf("Found controller %s\n", c.Name())
-			go func(c controllers.Controller) {
-				for range time.NewTicker(time.Minute).C {
-					charge, err := c.Charge()
-					if err != nil {
-						log.Println(err)
-					} else {
-						log.Printf("%s: Battery %d%%\n", c.Name(), charge)
-					}
-				}
-			}(c)
+			go watchController(done, c)
 		}
 	}
 }
