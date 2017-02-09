@@ -20,23 +20,36 @@ func NewController(done <-chan struct{}, device *udev.Device) (Controller, error
 // LinuxController wraps a udev device with convenience
 // methods.
 type LinuxController struct {
-	device *udev.Device
+	device      *udev.Device
+	batteryFile string
 }
 
 // Charge returns the current charge in this controller's
 // battery expressed as a percentage.
 func (c *LinuxController) Charge() (uint, error) {
-	charge, err := os.Open(c.device.Syspath() + "/power_supply")
-	if err != nil {
-		return 0, errors.Wrapf(err, "Unable to open device syspath")
-	}
-	contents, err := charge.Readdirnames(1)
-	if err != nil {
-		return 0, errors.Wrapf(err, "Unable to read device syspath contents")
-	}
-	charge, err = os.Open(c.device.Syspath() + "/power_supply/" + contents[0] + "/capacity")
-	if err != nil {
-		return 0, errors.Wrapf(err, "Unable to open device battery file")
+	var (
+		charge *os.File
+		err    error
+	)
+	if c.batteryFile == "" {
+		charge, err = os.Open(c.device.Syspath() + "/power_supply")
+		if err != nil {
+			return 0, errors.Wrapf(err, "Unable to open device syspath")
+		}
+		contents, err := charge.Readdirnames(1)
+		if err != nil {
+			return 0, errors.Wrapf(err, "Unable to read device syspath contents")
+		}
+		charge, err = os.Open(c.device.Syspath() + "/power_supply/" + contents[0] + "/capacity")
+		if err != nil {
+			return 0, errors.Wrapf(err, "Unable to open device battery file")
+		}
+		c.batteryFile = charge.Name()
+	} else {
+		charge, err = os.Open(c.batteryFile)
+		if err != nil {
+			return 0, errors.Wrapf(err, "Unable to open device battery file")
+		}
 	}
 	chars := make([]byte, 3)
 	numberRead, err := charge.Read(chars[:])
